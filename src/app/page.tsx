@@ -126,6 +126,99 @@ function StrengthRow({ check }: { check: CheckResult }) {
   );
 }
 
+const FAQ_ITEMS: { question: string; answer: string }[] = [
+  {
+    question: "What does ComplianceScope actually check?",
+    answer:
+      "It runs an automated technical scan of your website's homepage: HTTPS usage, security headers, whether a privacy policy is linked, whether a cookie consent banner or consent-management platform is present, CPRA-style \"Do Not Sell/Share\" links, and mentions of data-subject-rights or grievance-officer contacts.",
+  },
+  {
+    question: "Is this legal advice or an official compliance certification?",
+    answer:
+      "No. This is an informational, automated technical scan only. It cannot verify legal matters like your lawful basis for processing, data retention periods, or vendor contracts. Always consult qualified legal counsel for a full compliance assessment.",
+  },
+  {
+    question: "Which regulations are currently supported?",
+    answer:
+      "GDPR (European Union), CPRA/CCPA (California, USA), and the DPDP Act (India). More regions can be added over time.",
+  },
+  {
+    question: "How is the 0-10 score calculated?",
+    answer:
+      "Each regulation has a set of weighted checks relevant to it. A passing check earns full weight, a warning earns half weight, and a failing check earns none. The score is the weighted percentage of checks passed, scaled to 0-10.",
+  },
+  {
+    question: "Do you store my website data or the scan results?",
+    answer:
+      "This prototype does not persist scan results to a database — everything happens in your browser session. The PDF is generated on demand, and the \"email report\" feature is currently a stub that does not send real email yet.",
+  },
+  {
+    question: "How often should I re-scan my site?",
+    answer:
+      "Re-scan after any change to your privacy policy, cookie/consent setup, or when a regulation in your operating region is updated. As a baseline, a quarterly check is a reasonable habit.",
+  },
+];
+
+function FaqItem({
+  item,
+  isOpen,
+  onToggle,
+}: {
+  item: { question: string; answer: string };
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="border-b border-slate-200 last:border-b-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 py-4 text-left"
+      >
+        <span className="text-sm font-semibold text-slate-800">
+          {item.question}
+        </span>
+        <span
+          className={`shrink-0 text-slate-400 transition-transform ${
+            isOpen ? "rotate-45" : ""
+          }`}
+        >
+          {"+"}
+        </span>
+      </button>
+      {isOpen && (
+        <p className="pb-4 pr-8 text-sm text-slate-600">{item.answer}</p>
+      )}
+    </div>
+  );
+}
+
+function FaqSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  return (
+    <section className="mt-10 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p className="mb-1 text-lg font-bold text-[#14213d]">
+        Frequently asked questions
+      </p>
+      <p className="mb-2 text-sm text-slate-500">
+        A quick primer on what ComplianceScope does and how to read your
+        results.
+      </p>
+      <div>
+        {FAQ_ITEMS.map((item, i) => (
+          <FaqItem
+            key={item.question}
+            item={item}
+            isOpen={openIndex === i}
+            onToggle={() => setOpenIndex(openIndex === i ? null : i)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [selectedRegs, setSelectedRegs] = useState<RegulationId[]>([
@@ -272,30 +365,21 @@ export default function Home() {
 
         {/* Step 1 & 2: input card */}
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div>
-              <label
-                htmlFor="url"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
-              >
-                Step 1 &middot; Website URL
-              </label>
-              <input
-                id="url"
-                type="text"
-                placeholder="example.com or https://example.com"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-[#0f2540] focus:ring-2 focus:ring-[#0f2540]/20"
-              />
-            </div>
-            <button
-              onClick={runScan}
-              disabled={stage === "scanning"}
-              className="h-fit rounded-lg bg-[#0f2540] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#16325a] disabled:cursor-not-allowed disabled:opacity-60"
+          <div>
+            <label
+              htmlFor="url"
+              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
             >
-              {stage === "scanning" ? "Scanning…" : "Step 3 · Run Scan"}
-            </button>
+              Step 1 &middot; Website URL
+            </label>
+            <input
+              id="url"
+              type="text"
+              placeholder="example.com or https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-[#0f2540] focus:ring-2 focus:ring-[#0f2540]/20"
+            />
           </div>
 
           <div className="mt-5">
@@ -336,6 +420,16 @@ export default function Home() {
                 );
               })}
             </div>
+          </div>
+
+          <div className="mt-5 flex justify-end">
+            <button
+              onClick={runScan}
+              disabled={stage === "scanning"}
+              className="rounded-lg bg-[#0f2540] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#16325a] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {stage === "scanning" ? "Scanning…" : "Run Scan"}
+            </button>
           </div>
 
           {errorMsg && (
@@ -478,6 +572,8 @@ export default function Home() {
             </section>
           </>
         )}
+
+        <FaqSection />
       </main>
 
       <footer className="border-t border-slate-200 bg-white py-6">
